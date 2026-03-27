@@ -238,9 +238,26 @@ main() {
 # shellcheck disable=SC2034
 CONFIG_VALUE_TRAILING_NEWLINE="${CONFIG_VALUE_TRAILING_NEWLINE:-strip-for-single-line}"
 DEFAULTS
-  # Fix shellcheck source directive to point at staged defaults instead of src/
-  sed -i.bak 's|# shellcheck source=src/scripts/defaults/|# shellcheck source=target/test/scripts/defaults/|' target/test/scripts/util/substitute-tokens-from-dir
-  rm -f target/test/scripts/util/substitute-tokens-from-dir.bak
+  cat > target/test/scripts/defaults/platform.bash << 'PLATFORM'
+#!/usr/bin/env bash
+# Test stub - consuming projects provide their own platform defaults
+# shellcheck disable=SC2034
+BUILD_PLATFORM="${BUILD_PLATFORM:-test}"
+BUILD_PLATFORM_LOG_PROVIDER="${BUILD_PLATFORM_LOG_PROVIDER:-stdout}"
+PLATFORM
+  mkdir -p target/test/scripts/lib
+  cat > target/test/scripts/lib/log.bash << 'LOG'
+#!/usr/bin/env bash
+# Test stub - stdout log provider (consuming projects provide their own log.bash)
+log() { echo "${*}"; }
+log_error() { echo "ERROR: ${*}"; }
+log_warning() { echo "WARNING: ${*}"; }
+LOG
+  # Rewrite all shellcheck source directives to point at staged copies
+  while IFS= read -r file; do
+    sed -i.bak 's|# shellcheck source=src/scripts/|# shellcheck source=target/test/scripts/|g' "${file}"
+    rm -f "${file}.bak"
+  done < <(find target/test/scripts -type f)
   log_info "Staged scripts to target/test/scripts/ with test defaults"
 
   # Check scripts are executable
