@@ -3,6 +3,8 @@
 #
 # helpers.bash - Shared test helper functions
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 # Test output directory - all test artifacts go here for diagnostics
 # Absolute paths so tests that cd into subdirectories can still find scripts
 TEST_TARGET_DIR="$(pwd)/target/test/bats"
@@ -20,13 +22,33 @@ if [[ ! -d "$STAGED_SCRIPTS_DIR/util" ]]; then
 # Test defaults - consuming projects provide their own
 # shellcheck disable=SC2034
 CONFIG_VALUE_TRAILING_NEWLINE="${CONFIG_VALUE_TRAILING_NEWLINE:-strip-for-single-line}"
+TOKEN_SUBSTITUTION_PASSES="${TOKEN_SUBSTITUTION_PASSES:-1}"
 DEFAULTS
+  cat > "$STAGED_SCRIPTS_DIR/defaults/platform.bash" << 'PLATFORM'
+#!/usr/bin/env bash
+# Test stub - consuming projects provide their own platform defaults
+# shellcheck disable=SC2034
+BUILD_PLATFORM="${BUILD_PLATFORM:-test}"
+BUILD_PLATFORM_LOG_PROVIDER="${BUILD_PLATFORM_LOG_PROVIDER:-stdout}"
+PLATFORM
+  mkdir -p "$STAGED_SCRIPTS_DIR/lib"
+  cat > "$STAGED_SCRIPTS_DIR/lib/log.bash" << 'LOG'
+#!/usr/bin/env bash
+# Test stub - stdout log provider (consuming projects provide their own log.bash)
+log() { echo "${*}"; }
+log_error() { echo "ERROR: ${*}"; }
+log_warning() { echo "WARNING: ${*}"; }
+LOG
 fi
 
 # Paths point at staged copy (which has defaults injected)
 UTIL_DIR="$STAGED_SCRIPTS_DIR/util"
 LIB_DIR="$STAGED_SCRIPTS_DIR/lib"
 PLUGINS_DIR="$STAGED_SCRIPTS_DIR/plugins"
+
+# Source log stub so log_error/log_warning/log are available when tests source lib scripts directly
+# shellcheck disable=SC1090
+source "$LIB_DIR/log.bash"
 
 # Counter for unique directory names within a test file
 _TEST_DIR_COUNTER=0
@@ -47,6 +69,19 @@ assert_output_contains() {
   if [[ "$output" != *"$expected"* ]]; then
     echo "Expected output to contain: $expected"
     echo "Actual output: $output"
+    return 1
+  fi
+}
+
+# Assert content string contains pattern
+assert_contains() {
+  local content="$1"
+  local pattern="$2"
+  local label="${3:-content}"
+  if [[ "$content" != *"$pattern"* ]]; then
+    echo "EXPECTED PATTERN: $pattern" >&3
+    echo "ACTUAL ${label}:" >&3
+    echo "$content" >&3
     return 1
   fi
 }
