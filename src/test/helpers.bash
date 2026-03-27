@@ -22,6 +22,7 @@ if [[ ! -d "$STAGED_SCRIPTS_DIR/util" ]]; then
 # Test defaults - consuming projects provide their own
 # shellcheck disable=SC2034
 CONFIG_VALUE_TRAILING_NEWLINE="${CONFIG_VALUE_TRAILING_NEWLINE:-strip-for-single-line}"
+TOKEN_SUBSTITUTION_PASSES="${TOKEN_SUBSTITUTION_PASSES:-1}"
 DEFAULTS
   cat > "$STAGED_SCRIPTS_DIR/defaults/platform.bash" << 'PLATFORM'
 #!/usr/bin/env bash
@@ -68,6 +69,19 @@ assert_output_contains() {
   if [[ "$output" != *"$expected"* ]]; then
     echo "Expected output to contain: $expected"
     echo "Actual output: $output"
+    return 1
+  fi
+}
+
+# Assert content string contains pattern
+assert_contains() {
+  local content="$1"
+  local pattern="$2"
+  local label="${3:-content}"
+  if [[ "$content" != *"$pattern"* ]]; then
+    echo "EXPECTED PATTERN: $pattern" >&3
+    echo "ACTUAL ${label}:" >&3
+    echo "$content" >&3
     return 1
   fi
 }

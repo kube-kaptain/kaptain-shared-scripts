@@ -237,6 +237,7 @@ main() {
 # Test defaults - consuming projects provide their own
 # shellcheck disable=SC2034
 CONFIG_VALUE_TRAILING_NEWLINE="${CONFIG_VALUE_TRAILING_NEWLINE:-strip-for-single-line}"
+TOKEN_SUBSTITUTION_PASSES="${TOKEN_SUBSTITUTION_PASSES:-1}"
 DEFAULTS
   cat > target/test/scripts/defaults/platform.bash << 'PLATFORM'
 #!/usr/bin/env bash
