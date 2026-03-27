@@ -3,6 +3,8 @@
 #
 # helpers.bash - Shared test helper functions
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 # Test output directory - all test artifacts go here for diagnostics
 # Absolute paths so tests that cd into subdirectories can still find scripts
 TEST_TARGET_DIR="$(pwd)/target/test/bats"
